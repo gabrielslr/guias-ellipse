@@ -674,6 +674,7 @@ input[type="datetime-local"] { color-scheme: dark; }
 // ═══════════════════════════════════════════════════════
 // API — wrapper fetch para o Apps Script REST
 // ═══════════════════════════════════════════════════════
+var GEMINI_KEY = '';
 var API_URL = 'https://script.google.com/macros/s/AKfycbzo8nTJItO42UIvGHJ7su2jINfD6cyiBIZZC8YDV0n-mMBIX4kUbJLUOkjl9QvltxX-vg/exec';
 
 function apiGet(action, params) {
@@ -719,6 +720,11 @@ var S = {
 window.onload = function() {
   definirDataDefault();
   ligarEventos();
+  // Carregar config (chave Gemini) e dados em paralelo
+  apiGet('config').then(function(c) {
+    if (c && c.geminiKey) GEMINI_KEY = c.geminiKey;
+  }).catch(function() {});
+
   apiGet('dados').then(function(d) {
     if (d && d.artigos)  S.catalogo_artigos  = d.artigos;
     if (d && d.clientes) S.catalogo_clientes = d.clientes;
@@ -1011,44 +1017,50 @@ function processarFoto(input, tipo) {
     var mime = file.type || 'image/jpeg';
 
     // Chamar Gemini directamente do browser (sem passar pelo Apps Script)
-    var GEMINI_KEY = 'AIzaSyDS47v0MCHJQEUIzXlFgGKVMGMGlNb2uJo';
-    var url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' + GEMINI_KEY;
+
+    var MODELS = ['gemini-2.5-flash-lite', 'gemini-2.5-flash'];
     var prompt = 'Analisa esta imagem e extrai a morada postal portuguesa. Responde APENAS com JSON puro sem backticks: {"morada":"rua e numero","cp":"XXXX-XXX","localidade":"cidade"}. Se nao encontrares algum campo deixa string vazia.';
 
-    fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [
-          { inline_data: { mime_type: mime, data: b64 } },
-          { text: prompt }
-        ]}],
-        generationConfig: { temperature: 0, maxOutputTokens: 200 }
+    function tentarModelo(idx) {
+      if (idx >= MODELS.length) {
+        btn.classList.remove('loading'); btn.innerHTML = orig; input.value = '';
+        toast('Nao foi possivel extrair a morada'); return;
+      }
+      var url = 'https://generativelanguage.googleapis.com/v1beta/models/' + MODELS[idx] + ':generateContent?key=' + GEMINI_KEY;
+      fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [
+            { inline_data: { mime_type: mime, data: b64 } },
+            { text: prompt }
+          ]}],
+          generationConfig: { temperature: 0, maxOutputTokens: 200 }
+        })
       })
-    })
-    .then(function(r) { return r.json(); })
-    .then(function(data) {
-      btn.classList.remove('loading'); btn.innerHTML = orig; input.value = '';
-      try {
-        var parts = data.candidates[0].content.parts;
-        var texto = '';
-        for (var i = 0; i < parts.length; i++) {
-          if (!parts[i].thought) texto += (parts[i].text || '');
-        }
-        texto = texto.replace(/```json/gi,'').replace(/```/g,'').trim();
-        var ini = texto.indexOf('{'), fim = texto.lastIndexOf('}');
-        var r2  = JSON.parse(texto.substring(ini, fim+1));
-        var p   = tipo === 'carga' ? 'inp-carga-' : 'inp-desc-';
-        if (r2.morada)     document.getElementById(p+'morada').value = r2.morada;
-        if (r2.cp)         document.getElementById(p+'cp').value     = r2.cp;
-        if (r2.localidade) document.getElementById(p+'loc').value    = r2.localidade;
-        toast('Morada preenchida');
-      } catch(ex) { toast('Nao foi possivel extrair a morada'); }
-    })
-    .catch(function() {
-      btn.classList.remove('loading'); btn.innerHTML = orig; input.value = '';
-      toast('Erro ao processar imagem');
-    });
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (data.error || !data.candidates) { tentarModelo(idx+1); return; }
+        try {
+          var parts = data.candidates[0].content.parts;
+          var texto = '';
+          for (var i = 0; i < parts.length; i++) {
+            if (!parts[i].thought) texto += (parts[i].text || '');
+          }
+          texto = texto.replace(/```json/gi,'').replace(/```/g,'').trim();
+          var ini = texto.indexOf('{'), fim = texto.lastIndexOf('}');
+          var r2  = JSON.parse(texto.substring(ini, fim+1));
+          btn.classList.remove('loading'); btn.innerHTML = orig; input.value = '';
+          var p = tipo === 'carga' ? 'inp-carga-' : 'inp-desc-';
+          if (r2.morada)     document.getElementById(p+'morada').value = r2.morada;
+          if (r2.cp)         document.getElementById(p+'cp').value     = r2.cp;
+          if (r2.localidade) document.getElementById(p+'loc').value    = r2.localidade;
+          toast('Morada preenchida');
+        } catch(ex) { tentarModelo(idx+1); }
+      })
+      .catch(function() { tentarModelo(idx+1); });
+    }
+    tentarModelo(0);
   };
   reader.readAsDataURL(file);
 }
