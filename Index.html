@@ -1,0 +1,1252 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="format-detection" content="telephone=no">
+<script>
+(function() {
+  // No Apps Script iframe o viewport não funciona normalmente
+  // Usar visualViewport API para detectar a escala real e compensar
+  function fixScale() {
+    var vvw = window.visualViewport ? window.visualViewport.width : window.innerWidth;
+    var ratio = window.innerWidth / vvw;
+    if (ratio > 1.05) {
+      // Está com zoom — escalar o body para compensar
+      document.body.style.transform = 'scale(' + (1/ratio) + ')';
+      document.body.style.transformOrigin = 'top left';
+      document.body.style.width = (ratio * 100) + '%';
+    }
+  }
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', fixScale);
+  }
+  window.addEventListener('load', fixScale);
+  // Prevenir zoom ao focar inputs
+  document.addEventListener('touchstart', function(){}, {passive: true});
+})();
+</script>
+<title>Guias ELLIPSE</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
+
+:root {
+  --bg:       #0b0e1a;
+  --surface:  #141826;
+  --surface2: #1c2236;
+  --border:   #252d45;
+  --amber:    #f59e0b;
+  --green:    #22c55e;
+  --red:      #ef4444;
+  --blue:     #3b82f6;
+  --text:     #e2e8f0;
+  --muted:    #64748b;
+  --font:     'DM Sans', sans-serif;
+  --mono:     'DM Mono', monospace;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  width: 100%;
+  max-width: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 16px;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  /* Prevenir zoom automático ao focar inputs no iOS */
+  touch-action: manipulation;
+}
+
+/* Garantir que inputs não causam zoom no iOS (font-size >= 16px obrigatório) */
+input, select, textarea, button {
+  font-size: 16px !important;
+  touch-action: manipulation;
+  -webkit-user-select: auto;
+}
+/* Desactivar zoom ao double-tap */
+* { touch-action: manipulation; }
+/* Iframe do Apps Script — forçar largura total */
+html { overflow-x: hidden; }
+
+#app {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  width: 100%;
+  max-width: 100%;
+  margin: 0 auto;
+  position: relative;
+  overflow: hidden;
+}
+
+@media (min-width: 520px) {
+  #app { max-width: 520px; }
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px 12px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  background: var(--bg);
+}
+
+.header-brand { display: flex; align-items: center; gap: 10px; }
+.header-logo {
+  width: 30px; height: 30px;
+  background: var(--amber);
+  border-radius: 7px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; font-weight: 700; color: #000;
+  font-family: var(--mono);
+}
+.header-title { font-size: 16px; font-weight: 600; letter-spacing: -.3px; }
+
+.content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 16px 24px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.nav {
+  display: flex;
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+  background: var(--surface);
+}
+
+.nav-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 10px 0 12px;
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-family: var(--font);
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  min-height: 56px;
+}
+.nav-btn.active { color: var(--amber); }
+.nav-btn svg { width: 20px; height: 20px; }
+
+.screen { display: none; flex-direction: column; gap: 16px; }
+.screen.active { display: flex; }
+
+/* Secções */
+.section-title {
+  font-size: 11px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 1px;
+  color: var(--muted); margin-bottom: 8px;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 18px;
+}
+
+/* Segmented */
+.seg {
+  display: flex;
+  background: var(--surface2);
+  border-radius: 10px;
+  padding: 3px; gap: 3px;
+}
+.seg-btn {
+  flex: 1; padding: 11px 4px;
+  border: none; border-radius: 8px;
+  background: transparent; color: var(--muted);
+  font-family: var(--font); font-size: 14px; font-weight: 500;
+  cursor: pointer; min-height: 44px;
+}
+.seg-btn.active { background: var(--amber); color: #000; font-weight: 700; }
+
+/* Fields */
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field-label {
+  font-size: 11px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: .8px; color: var(--muted);
+}
+.field-input, .field-select {
+  background: var(--surface2);
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  color: var(--text);
+  font-family: var(--font); font-size: 16px;
+  padding: 13px 14px;
+  outline: none; width: 100%;
+  -webkit-appearance: none; appearance: none;
+  min-height: 48px;
+}
+.field-input:focus, .field-select:focus { border-color: var(--amber); }
+.field-select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%2364748b' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  padding-right: 36px;
+}
+
+/* Pesquisa */
+.search-wrap { position: relative; }
+.search-icon {
+  position: absolute; left: 12px; top: 50%;
+  transform: translateY(-50%); color: var(--muted); pointer-events: none;
+}
+.field-search { padding-left: 38px; }
+.search-results {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 10px; max-height: 220px; overflow-y: auto; display: none;
+  margin-top: 6px;
+}
+.search-results.open { display: block; }
+.search-item {
+  padding: 14px 16px; cursor: pointer;
+  border-bottom: 1px solid var(--border);
+  min-height: 52px;
+}
+.search-item:last-child { border-bottom: none; }
+.search-item:active { background: var(--surface2); }
+.search-item-nome { font-size: 14px; font-weight: 500; }
+.search-item-ref { font-size: 11px; color: var(--muted); font-family: var(--mono); margin-top: 2px; }
+
+/* Toggle switch */
+.toggle-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 0; cursor: pointer;
+}
+.toggle-switch { position: relative; width: 40px; height: 24px; flex-shrink: 0; }
+.toggle-switch input { opacity: 0; width: 0; height: 0; }
+.toggle-slider {
+  position: absolute; inset: 0;
+  background: var(--border); border-radius: 24px; cursor: pointer;
+  transition: background .2s;
+}
+.toggle-slider:before {
+  content: ""; position: absolute;
+  width: 18px; height: 18px; left: 3px; top: 3px;
+  background: #fff; border-radius: 50%; transition: transform .2s;
+}
+.toggle-switch input:checked + .toggle-slider { background: var(--amber); }
+.toggle-switch input:checked + .toggle-slider:before { transform: translateX(16px); }
+.toggle-label { font-size: 13px; font-weight: 500; color: var(--muted); }
+
+/* Manual wrap */
+.manual-wrap {
+  display: none; flex-direction: column; gap: 10px;
+  padding-top: 12px; border-top: 1px solid var(--border); margin-top: 4px;
+}
+.manual-wrap.show { display: flex; }
+
+/* Artigos */
+.artigo-list { display: flex; flex-direction: column; gap: 8px; }
+.artigo-row {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--surface2); border-radius: 12px;
+  padding: 12px 14px; border: 1px solid var(--border); min-height: 56px;
+}
+.artigo-info { flex: 1; min-width: 0; }
+.artigo-nome { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.artigo-ref { font-size: 11px; color: var(--muted); font-family: var(--mono); }
+.artigo-qty-wrap { display: flex; align-items: center; gap: 4px; }
+.qty-btn {
+  width: 36px; height: 36px; background: var(--surface);
+  border: 1px solid var(--border); border-radius: 9px;
+  color: var(--text); font-size: 18px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; flex-shrink: 0;
+}
+.qty-val { font-family: var(--mono); font-size: 14px; font-weight: 500; min-width: 28px; text-align: center; }
+.artigo-del {
+  width: 32px; height: 32px; background: none; border: none;
+  color: var(--muted); cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 6px; flex-shrink: 0;
+}
+
+/* Livre wrap */
+.livre-wrap { display: none; flex-direction: column; gap: 10px; padding-top: 10px; }
+.livre-wrap.show { display: flex; }
+
+/* Botões */
+.btn-primary {
+  width: 100%; padding: 18px;
+  background: var(--amber); color: #000;
+  border: none; border-radius: 12px;
+  font-family: var(--font); font-size: 16px; font-weight: 700;
+  cursor: pointer; min-height: 56px;
+}
+.btn-primary:active { background: #d97706; transform: scale(.98); }
+.btn-primary:disabled { background: var(--surface2); color: var(--muted); }
+.btn-secondary {
+  width: 100%; padding: 14px;
+  background: var(--surface2); color: var(--text);
+  border: 1px solid var(--border); border-radius: 12px;
+  font-family: var(--font); font-size: 14px; font-weight: 500;
+  cursor: pointer;
+}
+
+/* Cliente seleccionado */
+.cliente-sel-box {
+  display: none;
+  align-items: center; justify-content: space-between;
+  background: var(--surface2); border: 1.5px solid var(--amber);
+  border-radius: 10px; padding: 12px 14px; margin-top: 6px;
+}
+.cliente-sel-box.show { display: flex; }
+.cliente-sel-nome { font-size: 14px; font-weight: 600; }
+.cliente-sel-nif { font-size: 11px; color: var(--muted); font-family: var(--mono); margin-top: 2px; }
+.cliente-clear-btn {
+  background: none; border: none; color: var(--muted);
+  cursor: pointer; padding: 4px; border-radius: 6px; flex-shrink: 0;
+}
+
+/* Foto btn */
+.foto-btn {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--surface2); border: 1.5px dashed var(--border);
+  border-radius: 10px; color: var(--muted);
+  font-family: var(--font); font-size: 13px; font-weight: 500;
+  padding: 12px 14px; cursor: pointer; width: 100%; min-height: 44px;
+}
+.foto-btn.loading { opacity: .6; pointer-events: none; }
+
+/* Aguardar / AT */
+#screen-aguardar { justify-content: center; align-items: center; min-height: 60vh; gap: 20px; text-align: center; }
+.spinner {
+  width: 48px; height: 48px;
+  border: 3px solid var(--border); border-top-color: var(--amber);
+  border-radius: 50%; animation: spin 1s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.at-icon {
+  width: 56px; height: 56px; background: rgba(34,197,94,.15);
+  border-radius: 50%; display: flex; align-items: center; justify-content: center;
+}
+.at-code {
+  font-family: var(--mono); font-size: 28px; font-weight: 500;
+  color: var(--text); letter-spacing: 2px;
+  background: var(--surface2); border: 1px solid var(--border);
+  padding: 14px 24px; border-radius: 12px; cursor: pointer; width: 100%; text-align: center;
+}
+.at-erro {
+  background: rgba(239,68,68,.1); border: 1px solid rgba(239,68,68,.3);
+  border-radius: 12px; padding: 14px; color: var(--red);
+  font-size: 13px; text-align: center; line-height: 1.5;
+}
+
+/* Histórico */
+.hist-item {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 12px; padding: 14px; cursor: pointer;
+  display: flex; flex-direction: column; gap: 6px;
+}
+.hist-header { display: flex; align-items: center; justify-content: space-between; }
+.hist-empresa { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .8px; color: var(--amber); font-family: var(--mono); }
+.hist-badge { font-size: 10px; font-weight: 600; padding: 3px 8px; border-radius: 20px; text-transform: uppercase; letter-spacing: .5px; }
+.hist-badge.concluido { background: rgba(34,197,94,.15); color: var(--green); }
+.hist-badge.pendente  { background: rgba(245,158,11,.15); color: var(--amber); }
+.hist-badge.erro      { background: rgba(239,68,68,.15);  color: var(--red); }
+.hist-badge.processando { background: rgba(59,130,246,.15); color: var(--blue); }
+.hist-rota { font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 6px; }
+.hist-at { font-family: var(--mono); font-size: 12px; color: var(--green); }
+.hist-data { font-size: 11px; color: var(--muted); }
+
+/* Modal */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,.7);
+  z-index: 300; display: flex; align-items: flex-end;
+  opacity: 0; pointer-events: none; transition: opacity .25s;
+}
+.modal-overlay.open { opacity: 1; pointer-events: all; }
+.modal-sheet {
+  background: var(--surface); border-radius: 20px 20px 0 0;
+  width: 100%; max-height: 85dvh; overflow-y: auto;
+  padding-bottom: 24px;
+  transform: translateY(100%); transition: transform .3s cubic-bezier(.32,.72,0,1);
+}
+.modal-overlay.open .modal-sheet { transform: translateY(0); }
+.modal-handle { width: 36px; height: 4px; background: var(--border); border-radius: 2px; margin: 12px auto 20px; }
+.modal-header { padding: 0 20px 16px; border-bottom: 1px solid var(--border); }
+.modal-empresa { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .8px; color: var(--amber); font-family: var(--mono); }
+.modal-tipo { font-size: 18px; font-weight: 600; letter-spacing: -.3px; margin-top: 2px; }
+.modal-body { padding: 20px; display: flex; flex-direction: column; }
+.detalhe-row { display: flex; padding: 11px 0; border-bottom: 1px solid var(--border); gap: 12px; }
+.detalhe-row:last-child { border-bottom: none; }
+.detalhe-label { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; min-width: 100px; flex-shrink: 0; padding-top: 1px; }
+.detalhe-valor { font-size: 14px; font-weight: 500; line-height: 1.4; flex: 1; }
+.detalhe-at { font-family: var(--mono); font-size: 20px; font-weight: 500; color: var(--green); cursor: pointer; }
+
+/* Loading overlay */
+#loading-overlay {
+  position: fixed; inset: 0; background: rgba(11,14,26,.9);
+  display: none; align-items: center; justify-content: center; z-index: 100;
+}
+#loading-overlay.show { display: flex; }
+.loading-box { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+.loading-text { font-size: 14px; color: var(--muted); }
+
+/* Toast */
+#toast {
+  position: fixed; bottom: 80px; left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 10px; padding: 10px 18px; font-size: 13px; font-weight: 500;
+  opacity: 0; transition: all .25s; white-space: nowrap; z-index: 200; pointer-events: none;
+}
+#toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+input[type="datetime-local"] { color-scheme: dark; }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <div class="header" id="header">
+    <div class="header-brand">
+      <div class="header-logo">G</div>
+      <span class="header-title">Guias</span>
+    </div>
+  </div>
+
+  <div class="content" id="content">
+
+    <!-- NOVA GUIA -->
+    <div class="screen active" id="screen-nova">
+
+      <div>
+        <div class="section-title">Empresa</div>
+        <div class="seg">
+          <button class="seg-btn active" id="seg-ellipse">Ellipse Fitness</button>
+          <button class="seg-btn" id="seg-yourfit">Yourfit</button>
+        </div>
+      </div>
+
+      <div>
+        <div class="section-title">Tipo de Guia</div>
+        <div class="seg">
+          <button class="seg-btn active" id="seg-ativos">Movimentação Ativos</button>
+          <button class="seg-btn" id="seg-transporte">Transporte</button>
+        </div>
+      </div>
+
+      <!-- Cliente (só transporte) -->
+      <div id="sec-cliente" style="display:none">
+        <div class="section-title">Cliente Destinatário</div>
+        <div class="card">
+          <div class="search-wrap">
+            <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <input type="text" class="field-input field-search" id="inp-cliente" placeholder="Pesquisar por nome ou NIF..." autocomplete="off">
+          </div>
+          <div class="search-results" id="cliente-results"></div>
+          <div class="cliente-sel-box" id="cliente-sel">
+            <div>
+              <div class="cliente-sel-nome" id="cliente-sel-nome"></div>
+              <div class="cliente-sel-nif" id="cliente-sel-nif"></div>
+            </div>
+            <button class="cliente-clear-btn" id="btn-limpar-cliente">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Rota -->
+      <div class="card">
+        <div class="section-title" style="margin-bottom:12px">Rota</div>
+        <div style="display:flex;flex-direction:column;gap:12px">
+
+          <!-- Carga -->
+          <div class="field">
+            <label class="field-label">Local de Carga</label>
+            <select class="field-select" id="sel-carga">
+              <option value="PRINCIPAL">Principal — Vilarinho das Cambas</option>
+              <option value="SECUNDARIO">Secundário — Areias</option>
+              <option value="TERCIARIO">Terciário — Vila Nova de Famalicão</option>
+            </select>
+          </div>
+
+          <!-- Toggle carga no cliente (só transporte) -->
+          <div class="toggle-row" id="row-carga-cliente" style="display:none">
+            <label class="toggle-switch">
+              <input type="checkbox" id="chk-carga-cliente">
+              <span class="toggle-slider"></span>
+            </label>
+            <span class="toggle-label">Local de carga é no cliente</span>
+          </div>
+          <div class="manual-wrap" id="wrap-carga-manual">
+            <button class="foto-btn" id="btn-foto-carga">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+              Tirar foto para preencher morada
+            </button>
+            <input type="file" accept="image/*" capture="environment" id="foto-input-carga" style="display:none">
+            <div class="field">
+              <label class="field-label">Morada</label>
+              <input type="text" class="field-input" id="inp-carga-morada" placeholder="Ex: Rua das Flores, nº 10" autocomplete="off">
+            </div>
+            <div style="display:flex;gap:10px">
+              <div class="field" style="flex:1">
+                <label class="field-label">Cód. Postal</label>
+                <input type="text" class="field-input" id="inp-carga-cp" placeholder="0000-000" autocomplete="off">
+              </div>
+              <div class="field" style="flex:2">
+                <label class="field-label">Localidade</label>
+                <input type="text" class="field-input" id="inp-carga-loc" placeholder="Lisboa" autocomplete="off">
+              </div>
+            </div>
+          </div>
+
+          <!-- Separador -->
+          <div style="display:flex;align-items:center;gap:8px;padding:0 4px">
+            <div style="flex:1;height:1px;background:var(--border)"></div>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+            <div style="flex:1;height:1px;background:var(--border)"></div>
+          </div>
+
+          <!-- Descarga -->
+          <div class="field">
+            <label class="field-label">Local de Descarga</label>
+            <select class="field-select" id="sel-descarga">
+              <option value="PRINCIPAL">Principal — Vilarinho das Cambas</option>
+              <option value="SECUNDARIO">Secundário — Areias</option>
+              <option value="TERCIARIO">Terciário — Vila Nova de Famalicão</option>
+            </select>
+          </div>
+
+          <!-- Toggle descarga noutro local (só transporte) -->
+          <div class="toggle-row" id="row-descarga-outro" style="display:none">
+            <label class="toggle-switch">
+              <input type="checkbox" id="chk-descarga-outro">
+              <span class="toggle-slider"></span>
+            </label>
+            <span class="toggle-label">Entregar na morada do cliente</span>
+          </div>
+          <div class="manual-wrap" id="wrap-descarga-manual">
+            <div style="font-size:12px;color:var(--muted);padding:4px 0 8px;line-height:1.5">
+              Se deixares os campos vazios, será usada a morada de faturação do cliente.
+            </div>
+            <button class="foto-btn" id="btn-foto-desc">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+              Tirar foto para preencher morada
+            </button>
+            <input type="file" accept="image/*" capture="environment" id="foto-input-desc" style="display:none">
+            <div class="field">
+              <label class="field-label">Morada</label>
+              <input type="text" class="field-input" id="inp-desc-morada" placeholder="Deixar vazio para usar morada de faturação" autocomplete="off">
+            </div>
+            <div style="display:flex;gap:10px">
+              <div class="field" style="flex:1">
+                <label class="field-label">Cód. Postal</label>
+                <input type="text" class="field-input" id="inp-desc-cp" placeholder="0000-000" autocomplete="off">
+              </div>
+              <div class="field" style="flex:2">
+                <label class="field-label">Localidade</label>
+                <input type="text" class="field-input" id="inp-desc-loc" placeholder="Lisboa" autocomplete="off">
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Data/hora -->
+      <div class="card">
+        <div class="field">
+          <label class="field-label">Início de Transporte</label>
+          <input type="datetime-local" class="field-input" id="inp-inicio" step="300">
+        </div>
+      </div>
+
+      <!-- Artigos -->
+      <div class="card">
+        <div class="section-title" style="margin-bottom:12px">Artigos</div>
+        <div class="search-wrap" style="margin-bottom:10px">
+          <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <input type="text" class="field-input field-search" id="inp-pesquisa" placeholder="Pesquisar artigo por nome ou ref..." autocomplete="off">
+        </div>
+        <div class="search-results" id="search-results"></div>
+        <div class="livre-wrap" id="livre-wrap">
+          <div class="field">
+            <label class="field-label">Descrição (ASTC 17)</label>
+            <input type="text" class="field-input" id="inp-livre" placeholder="Ex: Mala de ferramentas..." autocomplete="off">
+          </div>
+          <button class="btn-secondary" id="btn-adicionar-livre">Adicionar ASTC 17</button>
+        </div>
+        <div class="artigo-list" id="artigo-list"></div>
+        <div id="artigos-vazio" style="color:var(--muted);font-size:13px;text-align:center;padding:20px 0;display:none">Nenhum artigo adicionado</div>
+      </div>
+
+      <button class="btn-primary" id="btn-submeter">Criar Guia</button>
+
+    </div>
+
+    <!-- AGUARDAR -->
+    <div class="screen" id="screen-aguardar">
+      <div class="spinner"></div>
+      <div style="font-size:18px;font-weight:600">A comunicar à AT…</div>
+      <div style="font-size:13px;color:var(--muted)">A guia foi submetida.<br>Aguarda o código AT.</div>
+      <button class="btn-secondary" id="btn-cancelar-aguardar" style="max-width:200px">Cancelar espera</button>
+    </div>
+
+    <!-- CÓDIGO AT -->
+    <div class="screen" id="screen-at">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:16px;text-align:center">
+        <div class="at-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);font-weight:600">Código AT atribuído</div>
+        <div class="at-code" id="at-code">—</div>
+        <div style="font-size:12px;color:var(--muted)">Toca no código para copiar</div>
+      </div>
+      <button class="btn-primary" id="btn-nova-guia-at">Nova Guia</button>
+      <button class="btn-secondary" id="btn-ver-historico">Ver Histórico</button>
+    </div>
+
+    <!-- ERRO -->
+    <div class="screen" id="screen-erro">
+      <div class="at-erro" id="erro-msg">Ocorreu um erro.</div>
+      <button class="btn-primary" id="btn-nova-guia-erro">Tentar Novamente</button>
+    </div>
+
+    <!-- HISTÓRICO -->
+    <div class="screen" id="screen-historico">
+      <div class="section-title">Últimas guias</div>
+      <div id="hist-list"><div style="color:var(--muted);font-size:14px;text-align:center;padding:40px 0">Sem guias</div></div>
+    </div>
+
+  </div>
+
+  <nav class="nav" id="nav">
+    <button class="nav-btn active" id="nav-nova">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+      Nova
+    </button>
+    <button class="nav-btn" id="nav-historico">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      Histórico
+    </button>
+  </nav>
+
+</div>
+
+<!-- Modal detalhe -->
+<div class="modal-overlay" id="modal-detalhe">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <div class="modal-empresa" id="modal-empresa"></div>
+      <div class="modal-tipo" id="modal-tipo"></div>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+  </div>
+</div>
+
+<!-- Loading -->
+<div id="loading-overlay">
+  <div class="loading-box">
+    <div class="spinner"></div>
+    <div class="loading-text" id="loading-text">A carregar…</div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<script>
+// ════════════════════════════════════════════════════════
+// ESTADO
+// ════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════
+// API — wrapper fetch para o Apps Script REST
+// ═══════════════════════════════════════════════════════
+var API_URL = 'SUBSTITUIR_PELO_URL_DO_APPS_SCRIPT';
+
+function apiGet(action, params) {
+  var url = API_URL + '?action=' + action;
+  if (params) {
+    Object.keys(params).forEach(function(k) { url += '&' + k + '=' + encodeURIComponent(params[k]); });
+  }
+  return fetch(url).then(function(r) { return r.json(); });
+}
+
+function apiPost(action, payload) {
+  return fetch(API_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action: action, payload: payload })
+  }).then(function(r) { return r.json(); });
+}
+
+var S = {
+  empresa: 'ELLIPSE',
+  tipo: 'ATIVOS',
+  artigos: [],
+  catalogo_artigos: [],
+  catalogo_clientes: [],
+  cliente: null,
+  pedido_id: null,
+  polling_timer: null,
+  polling_count: 0,
+  MAX_POLL: 60,
+  hist_lista: []
+};
+
+// ════════════════════════════════════════════════════════
+// ARRANQUE
+// ════════════════════════════════════════════════════════
+window.onload = function() {
+  definirDataDefault();
+  ligarEventos();
+  apiGet('dados').then(function(d) {
+    if (d && d.artigos)  S.catalogo_artigos  = d.artigos;
+    if (d && d.clientes) S.catalogo_clientes = d.clientes;
+  }).catch(function() {});
+};
+
+function definirDataDefault() {
+  var now = new Date();
+  var m = now.getMinutes();
+  var r = m % 5;
+  if (r !== 0) now.setMinutes(m + (5 - r));
+  now.setSeconds(0); now.setMilliseconds(0);
+  now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+  var el = document.getElementById('inp-inicio');
+  if (el) el.value = now.toISOString().slice(0, 16);
+}
+
+// ════════════════════════════════════════════════════════
+// EVENTOS
+// ════════════════════════════════════════════════════════
+function ligarEventos() {
+  // Empresa
+  document.getElementById('seg-ellipse').addEventListener('click', function() { setEmpresa('ELLIPSE'); });
+  document.getElementById('seg-yourfit').addEventListener('click', function() { setEmpresa('YOURFIT'); });
+  // Tipo
+  document.getElementById('seg-ativos').addEventListener('click', function() { setTipo('ATIVOS'); });
+  document.getElementById('seg-transporte').addEventListener('click', function() { setTipo('TRANSPORTE'); });
+  // Nav
+  document.getElementById('nav-nova').addEventListener('click', function() { showTab('nova'); });
+  document.getElementById('nav-historico').addEventListener('click', function() { showTab('historico'); });
+  // Cliente
+  document.getElementById('inp-cliente').addEventListener('input', function() { pesquisarCliente(this.value); });
+  document.getElementById('btn-limpar-cliente').addEventListener('click', limparCliente);
+  // Toggles
+  document.getElementById('chk-carga-cliente').addEventListener('change', function() { toggleManual('carga', this.checked); });
+  document.getElementById('chk-descarga-outro').addEventListener('change', function() { toggleManual('desc', this.checked); });
+  // Clicar no texto do toggle também activa (apenas se não clicar no label/input)
+  document.querySelectorAll('.toggle-label').forEach(function(lbl) {
+    lbl.addEventListener('click', function() {
+      var row = this.closest('.toggle-row');
+      var chk = row && row.querySelector('input[type=checkbox]');
+      if (chk) { chk.checked = !chk.checked; chk.dispatchEvent(new Event('change')); }
+    });
+  });
+  // Foto
+  document.getElementById('btn-foto-carga').addEventListener('click', function() { document.getElementById('foto-input-carga').click(); });
+  document.getElementById('btn-foto-desc').addEventListener('click', function() { document.getElementById('foto-input-desc').click(); });
+  document.getElementById('foto-input-carga').addEventListener('change', function() { processarFoto(this, 'carga'); });
+  document.getElementById('foto-input-desc').addEventListener('change', function() { processarFoto(this, 'desc'); });
+  // Artigos
+  document.getElementById('inp-pesquisa').addEventListener('input', function() { pesquisarArtigo(this.value); });
+  document.getElementById('btn-adicionar-livre').addEventListener('click', adicionarLivre);
+  // Submeter
+  document.getElementById('btn-submeter').addEventListener('click', submeterGuia);
+  // Pós-submissão
+  document.getElementById('btn-nova-guia-at').addEventListener('click', novaGuia);
+  document.getElementById('btn-ver-historico').addEventListener('click', function() { showTab('historico'); });
+  document.getElementById('btn-nova-guia-erro').addEventListener('click', novaGuia);
+  document.getElementById('btn-cancelar-aguardar').addEventListener('click', cancelarAguardar);
+  // AT copiar
+  document.getElementById('at-code').addEventListener('click', copiarAT);
+  // Modal fechar
+  document.getElementById('modal-detalhe').addEventListener('click', function(e) {
+    if (e.target === this) this.classList.remove('open');
+  });
+  // Fechar dropdowns ao clicar fora
+  document.addEventListener('click', function(e) {
+    if (!e.target.closest('#inp-pesquisa') && !e.target.closest('#search-results'))
+      document.getElementById('search-results').classList.remove('open');
+    if (!e.target.closest('#inp-cliente') && !e.target.closest('#cliente-results'))
+      document.getElementById('cliente-results').classList.remove('open');
+  });
+}
+
+// ════════════════════════════════════════════════════════
+// NAVEGAÇÃO
+// ════════════════════════════════════════════════════════
+function showTab(tab) {
+  ['nova','aguardar','at','erro','historico'].forEach(function(s) {
+    document.getElementById('screen-' + s).classList.remove('active');
+  });
+  document.getElementById('nav-nova').classList.remove('active');
+  document.getElementById('nav-historico').classList.remove('active');
+  document.getElementById('screen-' + tab).classList.add('active');
+  if (tab === 'historico') {
+    document.getElementById('nav-historico').classList.add('active');
+    carregarHistorico();
+  } else {
+    document.getElementById('nav-nova').classList.add('active');
+  }
+  document.getElementById('content').scrollTop = 0;
+}
+
+// ════════════════════════════════════════════════════════
+// EMPRESA / TIPO
+// ════════════════════════════════════════════════════════
+function setEmpresa(e) {
+  S.empresa = e;
+  document.getElementById('seg-ellipse').classList.toggle('active', e === 'ELLIPSE');
+  document.getElementById('seg-yourfit').classList.toggle('active', e === 'YOURFIT');
+}
+
+function setTipo(t) {
+  S.tipo = t;
+  document.getElementById('seg-ativos').classList.toggle('active', t === 'ATIVOS');
+  document.getElementById('seg-transporte').classList.toggle('active', t === 'TRANSPORTE');
+  var isT = (t === 'TRANSPORTE');
+  document.getElementById('sec-cliente').style.display         = isT ? 'block' : 'none';
+  document.getElementById('row-carga-cliente').style.display   = isT ? 'flex'  : 'none';
+  document.getElementById('row-descarga-outro').style.display  = isT ? 'flex'  : 'none';
+  if (!isT) {
+    limparCliente();
+    resetToggle('carga'); resetToggle('desc');
+  }
+}
+
+function resetToggle(tipo) {
+  var chk = document.getElementById(tipo === 'carga' ? 'chk-carga-cliente' : 'chk-descarga-outro');
+  if (chk) { chk.checked = false; toggleManual(tipo, false); }
+}
+
+function toggleManual(tipo, on) {
+  var wrap = document.getElementById(tipo === 'carga' ? 'wrap-carga-manual' : 'wrap-descarga-manual');
+  var sel  = document.getElementById(tipo === 'carga' ? 'sel-carga' : 'sel-descarga');
+  if (wrap) wrap.classList.toggle('show', on);
+  if (sel)  { sel.style.opacity = on ? '0.35' : '1'; sel.style.pointerEvents = on ? 'none' : 'auto'; }
+  if (!on) {
+    var p = tipo === 'carga' ? 'inp-carga-' : 'inp-desc-';
+    ['morada','cp','loc'].forEach(function(f) {
+      var el = document.getElementById(p + f);
+      if (el) el.value = '';
+    });
+  }
+}
+
+// ════════════════════════════════════════════════════════
+// NORMALIZAÇÃO
+// ════════════════════════════════════════════════════════
+function norm(s) {
+  return (s || '').toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+// ════════════════════════════════════════════════════════
+// PESQUISA ARTIGOS
+// ════════════════════════════════════════════════════════
+function pesquisarArtigo(q) {
+  var res = document.getElementById('search-results');
+  var liv = document.getElementById('livre-wrap');
+  if (!q || q.length < 2) { res.classList.remove('open'); liv.classList.remove('show'); return; }
+  var qn = norm(q);
+  var matches = S.catalogo_artigos.filter(function(a) {
+    return norm(a.nome).indexOf(qn) >= 0 || norm(a.ref).indexOf(qn) >= 0 || (a.ean && a.ean.indexOf(q.trim()) >= 0);
+  }).slice(0, 8);
+  if (matches.length === 0) {
+    res.innerHTML = '<div style="padding:12px 14px;color:var(--muted);font-size:13px">Sem resultados</div>';
+    res.classList.add('open'); liv.classList.remove('show'); return;
+  }
+  res.innerHTML = matches.map(function(a) {
+    var enc = btoa(unescape(encodeURIComponent(JSON.stringify({ref:a.ref,ean:a.ean||'',nome:a.nome,livre:!!a.livre}))));
+    var sub = [a.ref,a.cor,a.tamanho].filter(Boolean).join(' · ');
+    return '<div class="search-item" data-enc="' + enc + '">' +
+      '<div class="search-item-nome">' + esc(a.nome) + '</div>' +
+      '<div class="search-item-ref">' + esc(sub) + '</div></div>';
+  }).join('');
+  res.classList.add('open');
+  res.querySelectorAll('.search-item').forEach(function(el) {
+    el.addEventListener('click', function() {
+      var a = JSON.parse(decodeURIComponent(escape(atob(this.getAttribute('data-enc')))));
+      res.classList.remove('open');
+      document.getElementById('inp-pesquisa').value = '';
+      if (a.livre) { liv.classList.add('show'); document.getElementById('inp-livre').focus(); return; }
+      adicionarArtigoState(a.ref, a.ean, a.nome, false, '');
+    });
+  });
+  liv.classList.remove('show');
+}
+
+function adicionarLivre() {
+  var desc = document.getElementById('inp-livre').value.trim();
+  if (!desc) { toast('Escreve a descrição'); return; }
+  adicionarArtigoState('ASTC 17', '', desc, true, desc);
+  document.getElementById('inp-livre').value = '';
+  document.getElementById('livre-wrap').classList.remove('show');
+}
+
+function adicionarArtigoState(ref, ean, nome, livre, desc) {
+  if (!livre) {
+    var ex = S.artigos.findIndex(function(a) { return a.ref === ref && !a.livre; });
+    if (ex >= 0) { S.artigos[ex].qty++; renderArtigos(); toast('Quantidade actualizada'); return; }
+  }
+  S.artigos.push({ref:ref,ean:ean,nome:nome,qty:1,livre:livre,desc:desc});
+  renderArtigos();
+}
+
+function renderArtigos() {
+  var list = document.getElementById('artigo-list');
+  var vaz  = document.getElementById('artigos-vazio');
+  if (S.artigos.length === 0) { list.innerHTML = ''; vaz.style.display = 'block'; return; }
+  vaz.style.display = 'none';
+  list.innerHTML = S.artigos.map(function(a, i) {
+    return '<div class="artigo-row">' +
+      '<div class="artigo-info">' +
+        '<div class="artigo-nome">' + esc(a.livre ? a.desc : a.nome) + '</div>' +
+        '<div class="artigo-ref">' + esc(a.ref) + (a.ean ? ' · ' + a.ean : '') + '</div>' +
+      '</div>' +
+      '<div class="artigo-qty-wrap">' +
+        '<button class="qty-btn" data-i="' + i + '" data-d="-1">−</button>' +
+        '<span class="qty-val">' + a.qty + '</span>' +
+        '<button class="qty-btn" data-i="' + i + '" data-d="1">+</button>' +
+      '</div>' +
+      '<button class="artigo-del" data-i="' + i + '"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg></button>' +
+    '</div>';
+  }).join('');
+  list.querySelectorAll('.qty-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var i = parseInt(this.getAttribute('data-i'));
+      var d = parseInt(this.getAttribute('data-d'));
+      S.artigos[i].qty = Math.max(1, S.artigos[i].qty + d);
+      renderArtigos();
+    });
+  });
+  list.querySelectorAll('.artigo-del').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      S.artigos.splice(parseInt(this.getAttribute('data-i')), 1);
+      renderArtigos();
+    });
+  });
+}
+
+// ════════════════════════════════════════════════════════
+// PESQUISA CLIENTES
+// ════════════════════════════════════════════════════════
+function pesquisarCliente(q) {
+  var res = document.getElementById('cliente-results');
+  if (!q || q.length < 2) { res.classList.remove('open'); return; }
+  var qn = norm(q);
+  var matches = S.catalogo_clientes.filter(function(c) {
+    return norm(c.nome).indexOf(qn) >= 0 || (c.nif && c.nif.indexOf(q.trim()) >= 0) || norm(c.cod).indexOf(qn) >= 0;
+  }).slice(0, 10);
+  if (matches.length === 0) {
+    res.innerHTML = '<div style="padding:12px 14px;color:var(--muted);font-size:13px">Sem resultados</div>';
+    res.classList.add('open'); return;
+  }
+  res.innerHTML = matches.map(function(c) {
+    var enc = btoa(unescape(encodeURIComponent(JSON.stringify(c))));
+    var sub = [c.cod, c.nif].filter(Boolean).join(' · ');
+    return '<div class="search-item" data-enc="' + enc + '">' +
+      '<div class="search-item-nome">' + esc(c.nome) + '</div>' +
+      '<div class="search-item-ref">' + esc(sub) + '</div></div>';
+  }).join('');
+  res.classList.add('open');
+  res.querySelectorAll('.search-item').forEach(function(el) {
+    el.addEventListener('click', function() {
+      var c = JSON.parse(decodeURIComponent(escape(atob(this.getAttribute('data-enc')))));
+      S.cliente = c;
+      res.classList.remove('open');
+      document.getElementById('inp-cliente').value = '';
+      document.getElementById('cliente-sel-nome').textContent = c.nome;
+      document.getElementById('cliente-sel-nif').textContent  = c.nif ? 'NIF: ' + c.nif : (c.cod ? 'Cód: ' + c.cod : '');
+      document.getElementById('cliente-sel').classList.add('show');
+      document.getElementById('inp-cliente').style.display = 'none';
+    });
+  });
+}
+
+function limparCliente() {
+  S.cliente = null;
+  document.getElementById('cliente-sel').classList.remove('show');
+  document.getElementById('inp-cliente').style.display = 'block';
+  document.getElementById('inp-cliente').value = '';
+  document.getElementById('cliente-results').classList.remove('open');
+}
+
+// ════════════════════════════════════════════════════════
+// FOTO → MORADA
+// ════════════════════════════════════════════════════════
+function processarFoto(input, tipo) {
+  if (!input.files || !input.files[0]) return;
+  var file  = input.files[0];
+  var btn   = document.getElementById(tipo === 'carga' ? 'btn-foto-carga' : 'btn-foto-desc');
+  var orig  = btn.innerHTML;
+  btn.classList.add('loading');
+  btn.innerHTML = 'A analisar imagem...';
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var b64  = e.target.result.split(',')[1];
+    var mime = file.type || 'image/jpeg';
+    apiPost('extrairMorada', {base64: b64, mimeType: mime}).then(function(r) {
+      btn.classList.remove('loading'); btn.innerHTML = orig; input.value = '';
+      if (r.ok) {
+        var p = tipo === 'carga' ? 'inp-carga-' : 'inp-desc-';
+        if (r.morada)     document.getElementById(p + 'morada').value = r.morada;
+        if (r.cp)         document.getElementById(p + 'cp').value     = r.cp;
+        if (r.localidade) document.getElementById(p + 'loc').value    = r.localidade;
+        toast('Morada preenchida');
+      } else { toast('Não foi possível extrair a morada'); }
+    }).catch(function() { btn.classList.remove('loading'); btn.innerHTML = orig; input.value = ''; toast('Erro ao processar imagem'); });
+  };
+  reader.readAsDataURL(file);
+}
+
+// ════════════════════════════════════════════════════════
+// SUBMETER
+// ════════════════════════════════════════════════════════
+function submeterGuia() {
+  if (S.artigos.length === 0) { toast('Adiciona pelo menos um artigo'); return; }
+  var inicio = document.getElementById('inp-inicio').value;
+  if (!inicio) { toast('Define o início de transporte'); return; }
+  // Arredondar para múltiplo de 5 min (para cima)
+  (function() {
+    var p=inicio.split('T'), dp=p[0].split('-'), hp=(p[1]||'00:00').split(':');
+    var d=new Date(+dp[0],+dp[1]-1,+dp[2],+hp[0],+hp[1]);
+    var r=d.getMinutes()%5;
+    if(r!==0) d.setMinutes(d.getMinutes()+(5-r));
+    d.setSeconds(0); d.setMilliseconds(0);
+    d.setMinutes(d.getMinutes()-d.getTimezoneOffset());
+    inicio=d.toISOString().slice(0,16);
+    document.getElementById('inp-inicio').value=inicio;
+  })();
+  // Verificar que a data não é no passado (Gesbox não aceita datas passadas)
+  var agora  = new Date();
+  var partes = inicio.split('T');
+  var dp     = partes[0].split('-');
+  var hp     = (partes[1] || '00:00').split(':');
+  var dtSel  = new Date(parseInt(dp[0]), parseInt(dp[1])-1, parseInt(dp[2]), parseInt(hp[0]), parseInt(hp[1]));
+  if (dtSel < agora) {
+    toast('O início de transporte não pode ser no passado');
+    // Arredondar para próximos 5 minutos e actualizar
+    var m = agora.getMinutes(); var r = m % 5;
+    if (r !== 0) agora.setMinutes(m + (5 - r));
+    agora.setSeconds(0); agora.setMilliseconds(0);
+    agora.setMinutes(agora.getMinutes() - agora.getTimezoneOffset());
+    document.getElementById('inp-inicio').value = agora.toISOString().slice(0, 16);
+    return;
+  }
+  var isT = (S.tipo === 'TRANSPORTE');
+  if (isT && !S.cliente) { toast('Seleciona o cliente destinatário'); return; }
+  var carga    = document.getElementById('sel-carga').value;
+  var descarga = isT ? '' : document.getElementById('sel-descarga').value;
+  if (!isT && carga === descarga) { toast('Carga e descarga têm de ser diferentes'); return; }
+
+  var cargaCliente = isT && document.getElementById('chk-carga-cliente').checked;
+  var descOutro    = isT && document.getElementById('chk-descarga-outro').checked;
+  var descarga_arm = (isT && !descOutro) ? document.getElementById('sel-descarga').value : '';
+
+  var payload = {
+    empresa:             S.empresa,
+    tipo:                S.tipo,
+    serie:               S.empresa === 'ELLIPSE' ? '2026ELLIPSE' : '2026YOURFITEQ',
+    cliente_nome:        isT ? S.cliente.nome : 'MCVT',
+    cliente_nif:         isT ? (S.cliente.nif || '') : '',
+    armazem_carga:       carga,
+    carga_no_cliente:    cargaCliente,
+    carga_morada:        cargaCliente ? document.getElementById('inp-carga-morada').value.trim() : '',
+    carga_cp:            cargaCliente ? document.getElementById('inp-carga-cp').value.trim()     : '',
+    carga_localidade:    cargaCliente ? document.getElementById('inp-carga-loc').value.trim()    : '',
+    armazem_descarga:    isT ? descarga_arm : descarga,
+    descarga_outro:      descOutro,
+    descarga_morada:     descOutro ? document.getElementById('inp-desc-morada').value.trim() : '',
+    descarga_cp:         descOutro ? document.getElementById('inp-desc-cp').value.trim()     : '',
+    descarga_localidade: descOutro ? document.getElementById('inp-desc-loc').value.trim()    : '',
+    inicio_transporte:   inicio.replace('T', ' '),
+    artigos:             S.artigos.map(function(a) {
+      return a.livre ? {codigo:'ASTC 17',descricao:a.desc,qty:a.qty} : {ean:a.ean,codigo:a.ref,qty:a.qty};
+    })
+  };
+
+  document.getElementById('btn-submeter').disabled = true;
+  showLoading('A submeter guia…');
+  apiPost('submeter', payload).then(function(r) {
+    hideLoading();
+    document.getElementById('btn-submeter').disabled = false;
+    if (r.ok) { S.pedido_id = r.id; S.polling_count = 0; showTab('aguardar'); iniciarPolling(); }
+    else { document.getElementById('erro-msg').textContent = 'Erro: ' + (r.erro || 'desconhecido'); showTab('erro'); }
+  }).catch(function(e) {
+    hideLoading();
+    document.getElementById('btn-submeter').disabled = false;
+    document.getElementById('erro-msg').textContent = 'Erro de ligação';
+    showTab('erro');
+  });
+}
+
+// ════════════════════════════════════════════════════════
+// POLLING AT
+// ════════════════════════════════════════════════════════
+function iniciarPolling() {
+  if (S.polling_timer) clearInterval(S.polling_timer);
+  setTimeout(verificarAT, 3000);
+  S.polling_timer = setInterval(verificarAT, 5000);
+}
+
+function verificarAT() {
+  if (!S.pedido_id) return;
+  S.polling_count++;
+  if (S.polling_count > S.MAX_POLL) {
+    clearInterval(S.polling_timer);
+    document.getElementById('erro-msg').textContent = 'Tempo esgotado. Verifica o Gesbox manualmente.';
+    showTab('erro'); return;
+  }
+  apiGet('verificar', {id: S.pedido_id}).then(function(r) {
+    if (r.estado === 'CONCLUIDO' && r.codigo_at) {
+      clearInterval(S.polling_timer);
+      document.getElementById('at-code').textContent = r.codigo_at;
+      showTab('at');
+    } else if (r.estado === 'AT_PENDENTE') {
+      clearInterval(S.polling_timer);
+      document.getElementById('at-code').textContent = r.numero_guia || 'Ver Gesbox';
+      document.getElementById('at-code').style.color = 'var(--amber)';
+      showTab('at');
+    } else if (r.estado === 'ERRO') {
+      clearInterval(S.polling_timer);
+      document.getElementById('erro-msg').textContent = 'Erro no Gesbox: ' + (r.erro || '');
+      showTab('erro');
+    }
+  }).catch(function() {});
+}
+
+function cancelarAguardar() {
+  clearInterval(S.polling_timer);
+  toast('Podes consultar o código AT no histórico');
+  showTab('nova');
+}
+
+function copiarAT() {
+  var c = document.getElementById('at-code').textContent;
+  if (!c || c === '—') return;
+  try { navigator.clipboard.writeText(c).then(function() { toast('Copiado!'); }); }
+  catch(e) { toast('Código: ' + c); }
+}
+
+// ════════════════════════════════════════════════════════
+// NOVA GUIA (reset)
+// ════════════════════════════════════════════════════════
+function novaGuia() {
+  S.artigos = []; S.pedido_id = null; S.polling_count = 0;
+  if (S.polling_timer) clearInterval(S.polling_timer);
+  renderArtigos(); limparCliente();
+  resetToggle('carga'); resetToggle('desc');
+  document.getElementById('inp-pesquisa').value = '';
+  document.getElementById('search-results').classList.remove('open');
+  document.getElementById('livre-wrap').classList.remove('show');
+  document.getElementById('btn-submeter').disabled = false;
+  definirDataDefault();
+  showTab('nova');
+}
+
+// ════════════════════════════════════════════════════════
+// HISTÓRICO
+// ════════════════════════════════════════════════════════
+function carregarHistorico() {
+  var list = document.getElementById('hist-list');
+  list.innerHTML = '<div style="color:var(--muted);font-size:13px;text-align:center;padding:30px 0">A carregar…</div>';
+  apiGet('historico').then(function(data) {
+      S.hist_lista = data || [];
+      var arm = {PRINCIPAL:'Principal',SECUNDARIO:'Secund.',TERCIARIO:'Terciário'};
+      if (!data || data.length === 0) {
+        list.innerHTML = '<div style="color:var(--muted);font-size:14px;text-align:center;padding:40px 0">Sem guias</div>'; return;
+      }
+      list.innerHTML = data.map(function(g, idx) {
+        var b = badge(g.estado);
+        var cl = arm[g.carga] || g.carga || '—';
+        var dl = arm[g.descarga] || g.descarga || '—';
+        return '<div class="hist-item" data-idx="' + idx + '">' +
+          '<div class="hist-header">' +
+            '<span class="hist-empresa">' + esc(g.empresa||'') + ' · ' + esc(g.tipo||'') + '</span>' +
+            '<span class="hist-badge ' + b.cls + '">' + b.label + '</span>' +
+          '</div>' +
+          '<div class="hist-rota"><span>' + esc(cl) + '</span><span style="color:var(--muted)">→</span><span>' + esc(dl) + '</span></div>' +
+          (g.codigo_at ? '<div class="hist-at">AT: ' + esc(g.codigo_at) + '</div>' : '') +
+          '<div class="hist-data">' + esc(g.inicio || g.criado || '') + '</div>' +
+        '</div>';
+      }).join('');
+      list.querySelectorAll('.hist-item').forEach(function(el) {
+        el.addEventListener('click', function() { abrirDetalhe(parseInt(this.getAttribute('data-idx'))); });
+      });
+    })
+  }).catch(function() {
+    list.innerHTML = '<div style="color:var(--muted);text-align:center;padding:30px 0">Erro ao carregar</div>';
+  });
+}
+
+function badge(estado) {
+  var m = {CONCLUIDO:{cls:'concluido',label:'Concluído'},PENDENTE:{cls:'pendente',label:'Pendente'},PROCESSANDO:{cls:'processando',label:'A processar'},ERRO:{cls:'erro',label:'Erro'},AT_PENDENTE:{cls:'pendente',label:'AT Pendente'}};
+  return m[estado] || {cls:'pendente',label:estado||'—'};
+}
+
+// ════════════════════════════════════════════════════════
+// MODAL DETALHE
+// ════════════════════════════════════════════════════════
+function abrirDetalhe(idx) {
+  var g = S.hist_lista[idx];
+  if (!g) return;
+  var arm = {PRINCIPAL:'Principal — Vilarinho das Cambas',SECUNDARIO:'Secundário — Areias',TERCIARIO:'Terciário — Vila Nova de Famalicão'};
+  document.getElementById('modal-empresa').textContent = (g.empresa||'') + ' · ' + (g.serie||'');
+  document.getElementById('modal-tipo').textContent    = g.tipo === 'TRANSPORTE' ? 'Guia de Transporte' : 'Movimentação de Ativos';
+  var rows = [];
+  if (g.inicio)     rows.push(['Início', esc(g.inicio)]);
+  if (g.tipo === 'TRANSPORTE' && g.cliente) rows.push(['Cliente', esc(g.cliente) + (g.cliente_nif ? ' <span style="color:var(--muted);font-size:12px">NIF: ' + esc(g.cliente_nif) + '</span>' : '')]);
+  rows.push(['Carga', esc(arm[g.carga] || g.carga || '—')]);
+  rows.push(['Descarga', esc(arm[g.descarga] || g.descarga || '—')]);
+  if (g.artigos) rows.push(['Artigos', esc(g.artigos).replace(/ \| /g, '<br>')]);
+  if (g.numero_guia) rows.push(['Nº Guia', esc(g.numero_guia)]);
+  if (g.codigo_at) rows.push(['Cód. AT', '<span class="detalhe-at" id="at-copy-' + idx + '">' + esc(g.codigo_at) + '</span><div style="font-size:11px;color:var(--muted)">Toca para copiar</div>']);
+  if (g.estado === 'AT_PENDENTE') rows.push(['AT', '<span style="color:var(--amber)">Pendente — verificar no Gesbox</span>']);
+  if (g.estado === 'ERRO' && g.erro) rows.push(['Erro', '<span style="color:var(--red)">' + esc(g.erro) + '</span>']);
+  if (g.criado) rows.push(['Criado', esc(g.criado)]);
+  document.getElementById('modal-body').innerHTML = rows.map(function(r) {
+    return '<div class="detalhe-row"><div class="detalhe-label">' + r[0] + '</div><div class="detalhe-valor">' + r[1] + '</div></div>';
+  }).join('');
+  var atEl = document.getElementById('at-copy-' + idx);
+  if (atEl) atEl.addEventListener('click', function() {
+    var t = this.textContent;
+    try { navigator.clipboard.writeText(t).then(function() { toast('Copiado!'); }); } catch(e) { toast(t); }
+  });
+  document.getElementById('modal-detalhe').classList.add('open');
+}
+
+// ════════════════════════════════════════════════════════
+// UTILITÁRIOS
+// ════════════════════════════════════════════════════════
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function showLoading(msg) {
+  document.getElementById('loading-text').textContent = msg || 'A carregar…';
+  document.getElementById('loading-overlay').classList.add('show');
+}
+function hideLoading() { document.getElementById('loading-overlay').classList.remove('show'); }
+function toast(msg) {
+  var el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('show');
+  setTimeout(function() { el.classList.remove('show'); }, 2500);
+}
+</script>
+</body>
+</html>
