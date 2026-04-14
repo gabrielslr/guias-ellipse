@@ -1374,14 +1374,11 @@ function carregarHistorico() {
         S.hist_lista = todos;
       } else {
         var nomeActual = S.utilizador ? S.utilizador.nome : '';
-        console.log('[filtro] utilizador:', nomeActual);
-        todos.forEach(function(g) { console.log('[filtro] guia:', g.id, 'colaborador:', JSON.stringify(g.colaborador)); });
         S.hist_lista = todos.filter(function(g) {
           var colab = (g.colaborador || '').trim();
           if (!colab) return false;
           return colab === nomeActual;
         });
-        console.log('[filtro] resultado:', S.hist_lista.length, 'guias');
       }
       var arm = {PRINCIPAL:'Principal',SECUNDARIO:'Secund.',TERCIARIO:'Terciário'};
       if (!data || data.length === 0) {
