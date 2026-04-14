@@ -1400,7 +1400,7 @@ function carregarHistorico() {
           '<div class="hist-rota"><span>' + esc(cl) + '</span><span style="color:var(--muted)">→</span><span>' + esc(dl) + '</span></div>' +
           (g.numero_guia ? '<div style="font-size:11px;color:var(--muted);font-family:var(--mono)">' + esc(g.numero_guia) + '</div>' : '') +
           (g.codigo_at && g.codigo_at !== '' ? '<div class="hist-at">AT: ' + esc(g.codigo_at) + '</div>' : '') +
-          '<div class="hist-data">' + esc(g.inicio || g.criado || '') + '</div>' +
+          '<div class="hist-data">' + fmtData(g.inicio || g.criado || '') + '</div>' +
         '</div>';
       }).join('');
       list.querySelectorAll('.hist-item').forEach(function(el) {
@@ -1426,7 +1426,7 @@ function abrirDetalhe(idx) {
   document.getElementById('modal-empresa').textContent = (g.empresa||'') + ' · ' + (g.serie||'');
   document.getElementById('modal-tipo').textContent    = g.tipo === 'TRANSPORTE' ? 'Guia de Transporte' : 'Movimentação de Ativos';
   var rows = [];
-  if (g.inicio)     rows.push(['Início', esc(g.inicio)]);
+  if (g.inicio)     rows.push(['Início', fmtData(g.inicio)]);
   if (g.tipo === 'TRANSPORTE' && g.cliente) rows.push(['Cliente', esc(g.cliente) + (g.cliente_nif ? ' <span style="color:var(--muted);font-size:12px">NIF: ' + esc(g.cliente_nif) + '</span>' : '')]);
   rows.push(['Carga', esc(arm[g.carga] || g.carga || '—')]);
   rows.push(['Descarga', esc(arm[g.descarga] || g.descarga || '—')]);
@@ -1435,7 +1435,7 @@ function abrirDetalhe(idx) {
   if (g.codigo_at) rows.push(['Cód. AT', '<span class="detalhe-at" id="at-copy-' + idx + '">' + esc(g.codigo_at) + '</span><div style="font-size:11px;color:var(--muted)">Toca para copiar</div>']);
   if (g.estado === 'AT_PENDENTE') rows.push(['AT', '<span style="color:var(--amber)">Pendente — verificar no Gesbox</span>']);
   if (g.estado === 'ERRO' && g.erro) rows.push(['Erro', '<span style="color:var(--red)">' + esc(g.erro) + '</span>']);
-  if (g.criado) rows.push(['Criado', esc(g.criado)]);
+  if (g.criado) rows.push(['Criado', fmtData(g.criado)]);
   document.getElementById('modal-body').innerHTML = rows.map(function(r) {
     return '<div class="detalhe-row"><div class="detalhe-label">' + r[0] + '</div><div class="detalhe-valor">' + r[1] + '</div></div>';
   }).join('');
@@ -1452,6 +1452,13 @@ function abrirDetalhe(idx) {
 // ════════════════════════════════════════════════════════
 function esc(s) {
   return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function fmtData(s) {
+  if (!s) return '';
+  // Aceita: "2026-04-09 17:38:00", "2026-04-09 17:38", Date strings
+  var m = String(s).match(/(\d{4})-(\d{2})-(\d{2})[\sT](\d{2}):(\d{2})/);
+  if (m) return m[3] + '/' + m[2] + '/' + m[1] + ' - ' + m[4] + ':' + m[5];
+  return String(s).substring(0, 16);
 }
 function showLoading(msg) {
   document.getElementById('loading-text').textContent = msg || 'A carregar…';
