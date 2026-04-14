@@ -1385,10 +1385,10 @@ function carregarHistorico() {
         });
       }
       var arm = {PRINCIPAL:'Principal',SECUNDARIO:'Secund.',TERCIARIO:'Terciário'};
-      if (!data || data.length === 0) {
+      if (!S.hist_lista || S.hist_lista.length === 0) {
         list.innerHTML = '<div style="color:var(--muted);font-size:14px;text-align:center;padding:40px 0">Sem guias</div>'; return;
       }
-      list.innerHTML = data.map(function(g, idx) {
+      list.innerHTML = S.hist_lista.map(function(g, idx) {
         var b = badge(g.estado);
         var cl = arm[g.carga] || g.carga || '—';
         var dl = arm[g.descarga] || g.descarga || '—';
